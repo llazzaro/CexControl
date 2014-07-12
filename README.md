@@ -4,6 +4,7 @@ CexControl is a simple utility script to manage mining reinvestments on Cex.IO, 
 This is Beta software. Use at your own risk.
 
 ### Installation
+pip install -r requirements.txt
 pip install git+https://github.com/llazzaro/CexControl.git
 
 ### User guide
