@@ -1,0 +1,1 @@
+git+https://github.com/matveyco/cex.io-api-python.git
