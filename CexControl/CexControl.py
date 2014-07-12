@@ -19,9 +19,6 @@ import time
 import json
 import sys
 
-# just place till P3
-import urllib2
-
 version = "0.9.4"
 
 # Get Loggin obect
@@ -47,7 +44,7 @@ class Coin(object):
         self.Reserve = Reserve
 
 
-class Settings:
+class Settings(object):
 
     def __init__(self):
 
@@ -212,85 +209,7 @@ class Settings:
     # Simply return the context, based on user name, key and secret
     def GetContext(self):
 
-        return cexapi.api(self.username, self.api_key, self.api_secret)
-
-
-def main():
-
-    log.Output("======= CexControl version %s =======" % version)
-
-    # First, try to get the configuration settings in the settings object
-    global settings
-    settings = Settings()
-    settings.LoadSettings()
-
-    ParseArguments(settings)
-
-    try:
-        context = settings.GetContext()
-        balance = context.balance()
-
-        log.Output("========================================")
-
-        log.Output("Account       : %s" % settings.username)
-        log.Output("GHS balance   : %s" % balance['GHS']['available'])
-
-        log.Output("========================================")
-
-        log.Output("BTC Threshold: %0.8f" % settings.BTC.Threshold)
-        log.Output("BTC Reserve  : %0.8f" % settings.BTC.Reserve)
-
-        log.Output("NMC Threshold: %0.8f" % settings.NMC.Threshold)
-        log.Output("NMC Reserve  : %0.8f" % settings.NMC.Reserve)
-
-        log.Output("IXC Threshold: %0.8f" % settings.IXC.Threshold)
-        log.Output("IXC Reserve  : %0.8f" % settings.IXC.Reserve)
-
-        log.Output("LTC Threshold: %0.8f" % settings.LTC.Threshold)
-        log.Output("LTC Reserve  : %0.8f" % settings.LTC.Reserve)
-
-        log.Output("Efficiency Threshold: %s" % settings.EfficiencyThreshold)
-        log.Output("Hold coins below efficiency threshold: %s" % settings.HoldCoins)
-
-    except:
-        log.Output("== !! ============================ !! ==")
-        log.Output("Error:")
-
-        try:
-            ErrorMessage = balance['error']
-        except:
-            ErrorMessage = ("Unkown")
-
-        log.Output(ErrorMessage)
-
-        log.Output("")
-
-        log.Output("Could not connect Cex.IO, exiting")
-        log.Output("== !! ============================ !! ==")
-        exit()
-
-    while True:
-        try:
-            TradeLoop(context, settings)
-
-        except urllib2.HTTPError, err:
-            log.Output("HTTPError :%s" % err)
-
-        except:
-            log.Output("Unexpected error:")
-            log.Output(sys.exc_info()[0])
-            log.Output("An error occurred, skipping cycle")
-
-        log.Output("")
-
-        cycle = 150
-        log.Output("Cycle completed, idle for %s seconds" % cycle)
-
-        while cycle > 0:
-            time.sleep(10)
-            cycle = cycle - 10
-
-    pass
+        return cexapi.API(self.username, self.api_key, self.api_secret)
 
 
 # Externalised tradeloop
@@ -460,45 +379,12 @@ def GetContext():
     api_secret = str(settings['secret'])
 
     try:
-        context = cexapi.api(username, api_key, api_secret)
+        context = cexapi.API(username, api_key, api_secret)
 
     except:
         log.Output(context)
 
     return context
-
-
-def ParseArguments(settings):
-    arguments = sys.argv
-
-    if (len(arguments) > 1):
-        log.Output("CexControl started with arguments")
-        log.Output("")
-
-        # Remove the filename itself
-        del arguments[0]
-
-        for argument in arguments:
-
-            if argument == "newconfig":
-                log.Output("newconfig:")
-                log.Output("  Delete settings and create new")
-                settings.CreateSettings()
-
-            if argument == "setthreshold":
-                log.Output("setthreshold:")
-                log.Output("  Creeate new threshold settings")
-                settings.CreateTresholds()
-                settings.LoadSettings()
-
-            if argument == "version":
-                log.Output("Version: %s" % version)
-                exit()
-
-            if argument == "trial":
-                log.Output("trial:")
-                log.Output("  Trial mode, do not execute any real actions")
-                settings.Trial = True
 
 
 # log.Output the balance of a Coin
@@ -737,7 +623,3 @@ def GetPrice(Context, Ticker):
     Price = round(Price, 7)
 
     return Price
-
-
-if __name__ == '__main__':
-    main()

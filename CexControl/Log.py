@@ -14,7 +14,6 @@
 # Preparare Python 3
 from __future__ import print_function
 
-from Tkinter import END
 import time
 from time import strftime
 # This file is meant only for logging purposes, to have a central place to change logging into print or or other statements
@@ -38,8 +37,7 @@ class Logger(object):
         else:
             timestring = strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
             LogLine = str(timestring + " " + Message + "\n")
-            self.LogText.insert(END, LogLine)
-            self.LogText.see(END)
+            self.LogText += LogLine
 
         if self.ToFile is True:
             self.LogFile.write(str(int(time.time())))

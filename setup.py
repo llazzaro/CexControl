@@ -11,7 +11,7 @@ requires = [
 
 setup(
     name='CexControl',
-    version='0.1',
+    version='0.2.1',
     description='Python utility to connect to Cex.IO ',
     long_description=README + '\n\n' + CHANGES,
     classifiers=[
@@ -28,4 +28,7 @@ setup(
     install_requires=requires,
     tests_require=requires,
     test_suite="cexapi",
+    entry_points={
+        'console_scripts': ['run = CexControl.scripts.run:main']
+    }
 )
