@@ -13,18 +13,17 @@
 
 from __future__ import print_function
 
-import cexapi
 import re
+import sys
 import time
 import json
-import sys
+import logging
+
+import cexapi
 
 version = "0.9.4"
 
-# Get Loggin obect
-from Log import Logger
-log = Logger()
-settings = []
+log = logging.getLogger('CexControl')
 
 
 class CexControl(object):
@@ -64,7 +63,7 @@ class Settings(object):
 
     def LoadSettings(self):
 
-        log.Output("Attempting to load Settings")
+        log.info("Attempting to load Settings")
 
         try:
 
@@ -78,61 +77,61 @@ class Settings(object):
             try:
                 self.NMC.Threshold = float(LoadedFromFile['NMCThreshold'])
             except:
-                log.Output("NMC Threshold Setting not present, using default")
+                log.info("NMC Threshold Setting not present, using default")
 
             try:
                 self.NMC.Reserve = float(LoadedFromFile['NMCReserve'])
             except:
-                log.Output("NMC Reserve Setting not present, using default")
+                log.info("NMC Reserve Setting not present, using default")
 
             try:
                 self.BTC.Threshold = float(LoadedFromFile['BTCThreshold'])
             except:
-                log.Output("BTC Threshold Setting not present, using default")
+                log.info("BTC Threshold Setting not present, using default")
 
             try:
                 self.BTC.Reserve = float(LoadedFromFile['BTCReserve'])
             except:
-                log.Output("BTC Reserve Setting not present, using default")
+                log.info("BTC Reserve Setting not present, using default")
 
             try:
                 self.EfficiencyThreshold = float(LoadedFromFile['EfficiencyThreshold'])
             except:
-                log.Output("Efficiency Threshold Setting not present, using default")
+                log.info("Efficiency Threshold Setting not present, using default")
 
             try:
                 self.HoldCoins = bool(LoadedFromFile['HoldCoins'])
             except:
-                log.Output("Hold Coins Setting not present, using default")
+                log.info("Hold Coins Setting not present, using default")
 
             try:
                 self.IXC.Threshold = float(LoadedFromFile['IXCThreshold'])
             except:
-                log.Output("IXC Threshold Setting not present, using default")
+                log.info("IXC Threshold Setting not present, using default")
 
             try:
                 self.IXC.Reserve = float(LoadedFromFile['IXCReserve'])
             except:
-                log.Output("IXC Reserve Setting not present, using default")
+                log.info("IXC Reserve Setting not present, using default")
 
             if (LoadedFromFile):
-                log.Output("File found, loaded")
+                log.info("File found, loaded")
 
             try:
                 self.LTC.Threshold = float(LoadedFromFile['LTCThreshold'])
             except:
-                log.Output("LTC Threshold Setting not present, using default")
+                log.info("LTC Threshold Setting not present, using default")
 
             try:
                 self.LTC.Reserve = float(LoadedFromFile['LTCReserve'])
             except:
-                log.Output("LTC Reserve Setting not present, using default")
+                log.info("LTC Reserve Setting not present, using default")
 
             if (LoadedFromFile):
-                log.Output("File found, loaded")
+                log.info("File found, loaded")
 
         except IOError:
-            log.Output("Could not open file, attempting to create new one")
+            log.info("Could not open file, attempting to create new one")
             self.CreateSettings()
             self.LoadSettings()
 
@@ -141,9 +140,9 @@ class Settings(object):
 
     def CreateSettings(self):
 
-        log.Output("")
-        log.Output("Please enter your credentials")
-        log.Output("")
+        log.info("")
+        log.info("Please enter your credentials")
+        log.info("")
         self.username = raw_input("Username: ")
         self.api_key = raw_input("API Key: ")
         self.api_secret = raw_input("API Secret: ")
@@ -169,20 +168,20 @@ class Settings(object):
                    "HoldCoins": bool(self.HoldCoins)}
 
         try:
-            log.Output("")
-            log.Output("Configuration created, attempting save")
+            log.info("")
+            log.info("Configuration created, attempting save")
             json.dump(ToFile, open("CexControlSettings.conf", 'w'))
-            log.Output("Save successfull, attempting reload")
+            log.info("Save successfull, attempting reload")
         except:
-            log.Output(sys.exc_info())
-            log.Output("Failed to write configuration file, giving up")
+            log.info(sys.exc_info())
+            log.info("Failed to write configuration file, giving up")
             exit()
 
     def CreateTresholds(self):
 
-        log.Output("")
-        log.Output("Please enter your thresholds")
-        log.Output("")
+        log.info("")
+        log.info("Please enter your thresholds")
+        log.info("")
 
         self.BTC.Threshold = raw_input("Threshold to trade BTC: ")
         self.BTC.Reserve = raw_input("Reserve for BTC: ")
@@ -216,33 +215,33 @@ class Settings(object):
 def TradeLoop(context, settings):
     now = time.asctime(time.localtime(time.time()))
 
-    log.Output("")
-    log.Output("Start cycle at %s" % now)
+    log.info("")
+    log.info("Start cycle at %s" % now)
 
     CancelOrder(context)
 
     # balance = context.balance()
     GHSBalance = GetBalance(context, 'GHS')
-    log.Output("GHS balance: %s" % GHSBalance)
-    log.Output("")
+    log.info("GHS balance: %s" % GHSBalance)
+    log.info("")
 
     TargetCoin = GetTargetCoin(context)
 
-    log.Output("Target Coin set to: %s" % TargetCoin[0])
-    log.Output("")
+    log.info("Target Coin set to: %s" % TargetCoin[0])
+    log.info("")
 
-    log.Output("Efficiency threshold: %s" % settings.EfficiencyThreshold)
-    log.Output("Efficiency possible: %0.2f" % TargetCoin[1])
+    log.info("Efficiency threshold: %s" % settings.EfficiencyThreshold)
+    log.info("Efficiency possible: %0.2f" % TargetCoin[1])
 
     if (TargetCoin[1] >= settings.EfficiencyThreshold):
         arbitrate = True
-        log.Output("Arbitration desired, trade coins for target coin")
+        log.info("Arbitration desired, trade coins for target coin")
     else:
         arbitrate = False
         if (settings.HoldCoins is True):
-            log.Output("Arbitration not desired, hold non target coins this cycle")
+            log.info("Arbitration not desired, hold non target coins this cycle")
         else:
-            log.Output("Arbitration not desired, reinvest all coins this cycle")
+            log.info("Arbitration not desired, reinvest all coins this cycle")
 
     PrintBalance(context, "BTC")
     PrintBalance(context, "NMC")
@@ -250,33 +249,33 @@ def TradeLoop(context, settings):
     PrintBalance(context, "LTC")
 
     # Trade in IXC
-    ReinvestCoinByClass(context, settings.IXC, "BTC")
+    ReinvestCoinByClass(context, settings.IXC, "BTC", settings)
 
     # Trade in LTC
-    ReinvestCoinByClass(context, settings.LTC, "BTC")
+    ReinvestCoinByClass(context, settings.LTC, "BTC", settings)
 
     # Trade for BTC
     if (TargetCoin[0] == "BTC"):
         if (arbitrate):
             # We will assume that on arbitrate, we also respect the Reserve
-            ReinvestCoinByClass(context, settings.NMC, TargetCoin[0])
+            ReinvestCoinByClass(context, settings.NMC, TargetCoin[0], settings)
 
         else:
             if (settings.HoldCoins is False):
-                ReinvestCoinByClass(context, settings.NMC, "GHS")
+                ReinvestCoinByClass(context, settings.NMC, "GHS", settings)
 
-        ReinvestCoinByClass(context, settings.BTC, "GHS")
+        ReinvestCoinByClass(context, settings.BTC, "GHS", settings)
 
     # Trade for NMC
     if (TargetCoin[0] == "NMC"):
         if (arbitrate):
             # We will assume that on arbitrate, we also respect the Reserve
-            ReinvestCoinByClass(context, settings.BTC, TargetCoin[0])
+            ReinvestCoinByClass(context, settings.BTC, TargetCoin[0], settings)
         else:
             if (settings.HoldCoins is False):
-                ReinvestCoinByClass(context, settings.BTC, "GHS")
+                ReinvestCoinByClass(context, settings.BTC, "GHS", settings)
 
-        ReinvestCoinByClass(context, settings.NMC, "GHS")
+        ReinvestCoinByClass(context, settings.NMC, "GHS", settings)
 
 
 # Convert a unicode based float to a real float for us in calculations
@@ -312,36 +311,36 @@ def CancelOrder(context):
     for item in order:
         try:
             context.cancel_order(item['id'])
-            log.Output("GHS/BTC Order %s canceled" % item['id'])
+            log.info("GHS/BTC Order %s canceled" % item['id'])
         except:
-            log.Output("Cancel order failed")
+            log.info("Cancel order failed")
 
     # NMC Order cancel
     order = context.current_orders("GHS/NMC")
     for item in order:
         try:
             context.cancel_order(item['id'])
-            log.Output("GHS/NMC Order %s canceled" % item['id'])
+            log.info("GHS/NMC Order %s canceled" % item['id'])
         except:
-            log.Output("Cancel order failed")
+            log.info("Cancel order failed")
 
     # NMC Order cancel
     order = context.current_orders("NMC/BTC")
     for item in order:
         try:
             context.cancel_order(item['id'])
-            log.Output("BTC/NMC Order %s canceled" % item['id'])
+            log.info("BTC/NMC Order %s canceled" % item['id'])
         except:
-            log.Output("Cancel order failed")
+            log.info("Cancel order failed")
 
     # IXC Order cancel
     order = context.current_orders("IXC/BTC")
     for item in order:
         try:
             context.cancel_order(item['id'])
-            log.Output("IXC/BTC Order %s canceled" % item['id'])
+            log.info("IXC/BTC Order %s canceled" % item['id'])
         except:
-            log.Output("Cancel order failed")
+            log.info("Cancel order failed")
 
 
 # Get the balance of certain type of Coin
@@ -349,7 +348,7 @@ def GetBalance(Context, CoinName):
 
     balance = ("NULL")
 
-    # log.Output("Attempting to retreive balance for %s" % CoinName)
+    # log.info("Attempting to retreive balance for %s" % CoinName)
 
     try:
 
@@ -359,20 +358,14 @@ def GetBalance(Context, CoinName):
         Saldo = ConvertUnicodeFloatToFloat(Coin["available"])
 
     except:
-        # log.Output (balance)
+        # log.info (balance)
         Saldo = 0
 
     return Saldo
 
 
 # Return the Contex for connection
-def GetContext():
-
-    try:
-        settings = LoadSettings()
-    except:
-        log.Output("Could not load settings, exiting")
-        exit()
+def GetContext(settings):
 
     username = str(settings['username'])
     api_key = str(settings['key'])
@@ -382,12 +375,12 @@ def GetContext():
         context = cexapi.API(username, api_key, api_secret)
 
     except:
-        log.Output(context)
+        log.info(context)
 
     return context
 
 
-# log.Output the balance of a Coin
+# log.info the balance of a Coin
 def PrintBalance(Context, CoinName):
 
     Saldo = GetBalance(Context, CoinName)
@@ -395,11 +388,11 @@ def PrintBalance(Context, CoinName):
     message = "%s " % CoinName
     message = message + "Balance: %.8f" % Saldo
 
-    log.Output(message)
+    log.info(message)
 
 
 # Holder Class, to reinvest Coin by class
-def ReinvestCoinByClass(Context, Coin, TargetCoin):
+def ReinvestCoinByClass(Context, Coin, TargetCoin, settings):
 
     CoinName = Coin.Name
     Threshold = Coin.Threshold
@@ -409,13 +402,13 @@ def ReinvestCoinByClass(Context, Coin, TargetCoin):
     InvestableSaldo = Saldo - Coin.Reserve
 
     if (InvestableSaldo > Threshold):
-        TradeCoin(Context, CoinName, TargetCoin, InvestableSaldo)
+        TradeCoin(Context, CoinName, TargetCoin, InvestableSaldo, settings)
 
 
 # Reinvest a coin
 def ReinvestCoin(Context, CoinName, Threshold, TargetCoin):
 
-    log.Output("Old function used, please issue a bug report, mention ReinvestCoin used")
+    log.info("Old function used, please issue a bug report, mention ReinvestCoin used")
 
 #    Saldo = GetBalance(Context, CoinName)
 #    if ( Saldo > Threshold ):
@@ -423,14 +416,13 @@ def ReinvestCoin(Context, CoinName, Threshold, TargetCoin):
 
 
 # Trade one coin for another
-def TradeCoin(Context, CoinName, TargetCoin, Amount):
-    global settings
+def TradeCoin(Context, CoinName, TargetCoin, Amount, settings):
 
     # Get the Price of the TargetCoin
     Price = GetPriceByCoin(Context, CoinName, TargetCoin)
 
-    log.Output("----------------------------------------")
-    log.Output(CoinName + " for " + TargetCoin)
+    log.info("----------------------------------------")
+    log.info(CoinName + " for " + TargetCoin)
 
     # Get the balance of the coin
     TotalBalance = GetBalance(Context, CoinName)
@@ -454,8 +446,7 @@ def TradeCoin(Context, CoinName, TargetCoin, Amount):
         AmountToBuy = AmountToBuy - 0.0000005
         AmountToBuy = round(AmountToBuy - 0.000005, 6)
 
-        log.Output("")
-        log.Output("To buy adjusted to : %.8f" % AmountToBuy)
+        log.info("To buy adjusted to : %.8f" % AmountToBuy)
 
         # Hack to adjust for 2% fee
         Total = AmountToBuy * FeePrice
@@ -468,7 +459,7 @@ def TradeCoin(Context, CoinName, TargetCoin, Amount):
     if TargetCoin == "BTC":
         action = 'sell'
         AmountToBuy = Saldo  # sell the complete balance!
-        log.Output("Amount to sell %.08f" % AmountToBuy)
+        log.info("Amount to sell %.08f" % AmountToBuy)
 
         # I am selling my Coin, for FeePrice BTC per Coin
         # So, I get AmounToBuy / FeePrice BTC
@@ -476,46 +467,43 @@ def TradeCoin(Context, CoinName, TargetCoin, Amount):
 
     else:
         action = 'buy'
-        log.Output("Amount to buy %.08f" % AmountToBuy)
+        log.info("Amount to buy %.08f" % AmountToBuy)
 
         # I am buying Coin, for FeePrice per Coin
         # So, I get AmounToBuy
         Gain = AmountToBuy
-
     if settings.Trial is False:
         result = Context.place_order(action, AmountToBuy, Price, TickerName)
     else:
-        log.Output("No real trade, trial mode")
+        log.info("No real trade, trial mode")
 
-    log.Output("")
-    log.Output("Placed order at %s" % TickerName)
+    log.info("Placed order at %s" % TickerName)
 
     if TargetCoin == "BTC":
-        log.Output("   Sell %.8f" % AmountToBuy)
+        log.info("   Sell %.8f" % AmountToBuy)
     else:
-        log.Output("   Buy %.8f" % AmountToBuy)
+        log.info("   Buy %.8f" % AmountToBuy)
 
-    log.Output("   at %.8f" % Price)
-    log.Output("   Total %.8f" % Total)
-    log.Output("   Funds %.8f" % TotalBalance)
+    log.info("   at %.8f" % Price)
+    log.info("   Total %.8f" % Total)
+    log.info("   Funds %.8f" % TotalBalance)
 
-    log.Output("")
     string = "   Gain %.8f " % Gain
     string = string + TargetCoin
-    log.Output(string)
+    log.info(string)
 
     try:
         if settings.Trial is False:
             OrderID = result['id']
-            log.Output("Order ID %s" % OrderID)
+            log.info("Order ID %s" % OrderID)
 
     except:
-        log.Output(result)
-        log.Output(AmountToBuy)
-        log.Output("%.7f" % Price)
-        log.Output(TickerName)
+        log.info(result)
+        log.info(AmountToBuy)
+        log.info("%.7f" % Price)
+        log.info(TickerName)
 
-    log.Output("----------------------------------------")
+    log.info("----------------------------------------")
 
 
 # Simply reformat a float to 8 numbers behind the comma
@@ -538,10 +526,10 @@ def GetTargetCoin(Context):
     GHS_NMCPrice = 1 / GHS_NMCPrice
     GHS_BTCPrice = 1 / GHS_BTCPrice
 
-    log.Output("1 NMC is %s GHS" % FormatFloat(GHS_NMCPrice))
-    log.Output("1 NMC is %s BTC" % FormatFloat(NMC_BTCPrice))
-    log.Output("1 BTC is %s GHS" % FormatFloat(GHS_BTCPrice))
-    log.Output("1 BTC is %s NMC" % FormatFloat(BTC_NMCPrice))
+    log.info("1 NMC is %s GHS" % FormatFloat(GHS_NMCPrice))
+    log.info("1 NMC is %s BTC" % FormatFloat(NMC_BTCPrice))
+    log.info("1 BTC is %s GHS" % FormatFloat(GHS_BTCPrice))
+    log.info("1 BTC is %s NMC" % FormatFloat(BTC_NMCPrice))
 
     NMCviaBTC = NMC_BTCPrice * GHS_BTCPrice
     BTCviaNMC = BTC_NMCPrice * GHS_NMCPrice
@@ -549,11 +537,10 @@ def GetTargetCoin(Context):
     BTCviaNMCPercentage = BTCviaNMC / GHS_BTCPrice * 100
     NMCviaBTCPercentage = NMCviaBTC / GHS_NMCPrice * 100
 
-    log.Output("")
-    log.Output("1 BTC via NMC is %s GHS" % FormatFloat(BTCviaNMC))
-    log.Output("Efficiency : %2.2f" % BTCviaNMCPercentage)
-    log.Output("1 NMC via BTC is %s GHS" % FormatFloat(NMCviaBTC))
-    log.Output("Efficiency : %2.2f" % NMCviaBTCPercentage)
+    log.info("1 BTC via NMC is %s GHS" % FormatFloat(BTCviaNMC))
+    log.info("Efficiency : %2.2f" % BTCviaNMCPercentage)
+    log.info("1 NMC via BTC is %s GHS" % FormatFloat(NMCviaBTC))
+    log.info("Efficiency : %2.2f" % NMCviaBTCPercentage)
 
     if NMCviaBTCPercentage > BTCviaNMCPercentage:
         coin = "BTC"
@@ -564,8 +551,7 @@ def GetTargetCoin(Context):
 
     returnvalue = (coin, efficiency)
 
-    log.Output("")
-    log.Output("Buy %s then use that to buy GHS" % coin)
+    log.info("Buy %s then use that to buy GHS" % coin)
 
     return returnvalue
 

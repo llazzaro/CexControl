@@ -1,18 +1,37 @@
 import sys
 import time
+import logging
 import urllib2
 
 from CexControl import Settings, TradeLoop, version
-from CexControl.Log import Logger
-log = Logger()
+
+
+def init_logging():
+    logger = logging.getLogger('CexControl')
+    logger.setLevel(logging.INFO)
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler('CexControl.log')
+    fh.setLevel(logging.INFO)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    # create formatter and add it to the handlers
+    formatter = logging.Formatter('%(module)s - %(lineno)d - %(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    # add the handlers to the logger
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+
+init_logging()
+log = logging.getLogger('CexControl')
 
 
 def ParseArguments(settings):
     arguments = sys.argv
 
     if (len(arguments) > 1):
-        log.Output("CexControl started with arguments")
-        log.Output("")
+        log.info("CexControl started with arguments")
 
         # Remove the filename itself
         del arguments[0]
@@ -20,32 +39,31 @@ def ParseArguments(settings):
         for argument in arguments:
 
             if argument == "newconfig":
-                log.Output("newconfig:")
-                log.Output("  Delete settings and create new")
+                log.info("newconfig:")
+                log.info("  Delete settings and create new")
                 settings.CreateSettings()
 
             if argument == "setthreshold":
-                log.Output("setthreshold:")
-                log.Output("  Creeate new threshold settings")
+                log.info("setthreshold:")
+                log.info("  Creeate new threshold settings")
                 settings.CreateTresholds()
                 settings.LoadSettings()
 
             if argument == "version":
-                log.Output("Version: %s" % version)
+                log.info("Version: %s" % version)
                 exit()
 
             if argument == "trial":
-                log.Output("trial:")
-                log.Output("  Trial mode, do not execute any real actions")
+                log.info("trial:")
+                log.info("  Trial mode, do not execute any real actions")
                 settings.Trial = True
 
 
 def main():
 
-    log.Output("======= CexControl version %s =======" % version)
+    log.info("======= CexControl version %s =======" % version)
 
     # First, try to get the configuration settings in the settings object
-    global settings
     settings = Settings()
     settings.LoadSettings()
 
@@ -55,43 +73,39 @@ def main():
         context = settings.GetContext()
         balance = context.balance()
 
-        log.Output("========================================")
+        log.info("========================================")
 
-        log.Output("Account       : %s" % settings.username)
-        log.Output("GHS balance   : %s" % balance['GHS']['available'])
+        log.info("Account       : %s" % settings.username)
+        log.info("GHS balance   : %s" % balance['GHS']['available'])
 
-        log.Output("========================================")
+        log.info("========================================")
 
-        log.Output("BTC Threshold: %0.8f" % settings.BTC.Threshold)
-        log.Output("BTC Reserve  : %0.8f" % settings.BTC.Reserve)
+        log.info("BTC Threshold: %0.8f" % settings.BTC.Threshold)
+        log.info("BTC Reserve  : %0.8f" % settings.BTC.Reserve)
 
-        log.Output("NMC Threshold: %0.8f" % settings.NMC.Threshold)
-        log.Output("NMC Reserve  : %0.8f" % settings.NMC.Reserve)
+        log.info("NMC Threshold: %0.8f" % settings.NMC.Threshold)
+        log.info("NMC Reserve  : %0.8f" % settings.NMC.Reserve)
 
-        log.Output("IXC Threshold: %0.8f" % settings.IXC.Threshold)
-        log.Output("IXC Reserve  : %0.8f" % settings.IXC.Reserve)
+        log.info("IXC Threshold: %0.8f" % settings.IXC.Threshold)
+        log.info("IXC Reserve  : %0.8f" % settings.IXC.Reserve)
 
-        log.Output("LTC Threshold: %0.8f" % settings.LTC.Threshold)
-        log.Output("LTC Reserve  : %0.8f" % settings.LTC.Reserve)
+        log.info("LTC Threshold: %0.8f" % settings.LTC.Threshold)
+        log.info("LTC Reserve  : %0.8f" % settings.LTC.Reserve)
 
-        log.Output("Efficiency Threshold: %s" % settings.EfficiencyThreshold)
-        log.Output("Hold coins below efficiency threshold: %s" % settings.HoldCoins)
+        log.info("Efficiency Threshold: %s" % settings.EfficiencyThreshold)
+        log.info("Hold coins below efficiency threshold: %s" % settings.HoldCoins)
 
-    except:
-        log.Output("== !! ============================ !! ==")
-        log.Output("Error:")
+    except Exception as ex:
+        log.exception(ex)
 
         try:
             ErrorMessage = balance['error']
         except:
             ErrorMessage = ("Unkown")
 
-        log.Output(ErrorMessage)
+        log.info(ErrorMessage)
 
-        log.Output("")
-
-        log.Output("Could not connect Cex.IO, exiting")
-        log.Output("== !! ============================ !! ==")
+        log.info("")
         exit()
 
     while True:
@@ -99,17 +113,17 @@ def main():
             TradeLoop(context, settings)
 
         except urllib2.HTTPError, err:
-            log.Output("HTTPError :%s" % err)
+            log.info("HTTPError :%s" % err)
 
-        except:
-            log.Output("Unexpected error:")
-            log.Output(sys.exc_info()[0])
-            log.Output("An error occurred, skipping cycle")
+        except Exception as ex:
+            log.info("Unexpected error:")
+            log.exception(ex)
+            log.info("An error occurred, skipping cycle")
 
-        log.Output("")
+        log.info("")
 
         cycle = 150
-        log.Output("Cycle completed, idle for %s seconds" % cycle)
+        log.info("Cycle completed, idle for %s seconds" % cycle)
 
         while cycle > 0:
             time.sleep(10)
